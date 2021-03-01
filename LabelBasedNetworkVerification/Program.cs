@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections;
-using System.Collections.Specialized;
 using ZenLib;
 using static ZenLib.Language;
-using System.Text;
-using System.Linq;
 
 namespace LabelBasedNetworkVerification
 {
@@ -13,6 +9,7 @@ namespace LabelBasedNetworkVerification
     {
         static unsafe void Main(string[] args)
         {
+            /*
             Zen<IDictionary<string, string>> l1 = Language.EmptyDict<string, string>();
             Zen<IDictionary<string, string>> l2 = Language.EmptyDict<string, string>();
             Zen<IDictionary<string, string>> l3 = Language.EmptyDict<string, string>();
@@ -22,7 +19,7 @@ namespace LabelBasedNetworkVerification
             var p1 = Pod.Create("default", l1, new List<string>() { "user" });
             var p2 = Pod.Create("default", l2, new List<string>() { "user" });
             var p3 = Pod.Create("default", l3, new List<string>() { "user" });
-            Zen<Pod>[] pods = new Zen<Pod>[] {p1, p2, p3};
+            Zen<Pod>[] pods = new Zen<Pod>[] { p1, p2, p3 };
 
             Zen<IDictionary<string, string>> sl1 = Language.EmptyDict<string, string>();
             Zen<IDictionary<string, string>> sl2 = Language.EmptyDict<string, string>();
@@ -32,17 +29,16 @@ namespace LabelBasedNetworkVerification
             sl2 = sl2.Add("user", "2");
             al1 = al1.Add("user", "2");
             al2 = al2.Add("user", "3");
-            var po1 = Policy.Create("default", sl1, al1, al1, 
-                new List<string>() {"user"}, 
+            var po1 = Policy.Create("default", sl1, al1, al1,
+                new List<string>() { "user" },
+                new List<string>() { "user" },
+                new List<string>() { "user" });
+            var po2 = Policy.Create( "default", sl2, al2, al1,
                 new List<string>() {"user"},
-                new List<string>() {"user"});
-            var po2 = Policy.Create("default", sl2, al2, al1, 
-                new List<string>() {"user"}, 
                 new List<string>() {"user"},
-                new List<string>() {"user"});
+                new List<string>() {"user"} );
             Zen<Policy>[] policies = new Zen<Policy>[] { po1, po2 };
 
-            /*
             var mx = Algorithms.CreateReachMatrix(pods, policies);
             Console.WriteLine(mx.Length);
             for (int i = 0; i < 3; ++i)
@@ -56,7 +52,6 @@ namespace LabelBasedNetworkVerification
             Console.WriteLine(allreach);
             //var crossL = Verifier.UserCrossCheck(mx, userHash, pods, "user");
             //Console.WriteLine("User cross: {0}",crossL);
-            */
             var pp1 = Pod.Create("default", EmptyDict<string, string>(), EmptyList<string>());
             var pp2 = Pod.Create("ns1", EmptyDict<string, string>(), EmptyList<string>());
             var pp3 = Pod.Create("ns2", EmptyDict<string, string>(), EmptyList<string>());
@@ -76,6 +71,7 @@ namespace LabelBasedNetworkVerification
             r3 = r3.AddBack(true);
             Console.WriteLine(r1.ToString());
             Console.WriteLine(output.Get(p1.GetNS().GetHashCode()).Value().ToString());
+            */
         }
     }
 }

@@ -8,13 +8,13 @@ using static ZenLib.Language;
 namespace VerifierTest
 {
     /// <summary>
-    /// Test algorithms of kano verifier
+    /// Test algorithms of kano verifier.
     /// </summary>
     [TestClass]
     public class AlgorithmTests
     {
         /// <summary>
-        /// Test ns(name) - pods is mapped correctly
+        /// Test ns(name) - pods is mapped correctly.
         /// </summary>
         [TestMethod]
         public void NSPodsMapTests()
@@ -32,7 +32,7 @@ namespace VerifierTest
             Assert.IsTrue(output.Get(p3.GetNS().GetHashCode()).Value().ToString().Equals(r3.ToString()));
         }
         /// <summary>
-        /// Test label-ns is mapped correctly
+        /// Test label-ns is mapped correctly.
         /// </summary>
         [TestMethod]
         public void NSLabelTest()
@@ -56,7 +56,7 @@ namespace VerifierTest
             Assert.IsTrue(output.Get(k3.At(0).Value().GetHashCode()).Value().ToString().Equals(r3.ToString()));
         }
         /// <summary>
-        /// Test one-side(ingress) can't allow traffic from podA to podB
+        /// Test one-side(ingress) can't allow traffic from podA to podB.
         /// </summary>
         [TestMethod]
         public void ReachabilityMatrix_OneDirectionOnly()
@@ -89,7 +89,7 @@ namespace VerifierTest
             TestHelper.AssertMatrixEqual(output, new Zen<IList<bool>>[] {r0, r1}, "Reachability Matrix, one direction only");
         }
         /// <summary>
-        /// Test two-side(ingress+egress) allows traffic from podA to podB
+        /// Test two-side(ingress+egress) allows traffic from podA to podB.
         /// </summary>
         [TestMethod]
         public void ReachabilityMatrix_TwoDirection()
@@ -128,8 +128,8 @@ namespace VerifierTest
             TestHelper.AssertMatrixEqual(egress, new Zen<IList<bool>>[] { r0, r1 }, "Happy path(egress matrix)");
         }
         /// <summary>
-        /// Test when no allowed ns is defined, 
-        /// NS of the policy is used
+        /// Test when no allowed ns is defined,
+        /// NS of the policy is used.
         /// </summary>
         [TestMethod]
         public void ReachabilityMatrix_DefaultNSScope()
@@ -176,7 +176,7 @@ namespace VerifierTest
             TestHelper.AssertMatrixEqual(egress, new Zen<IList<bool>>[] { r0, r1, r2, r3 }, "Reachability_Matrix_Test default NS(egress matrix)");
         }
         /// <summary>
-        /// Test when only ns selector is used, all pods in the ns will be allowed
+        /// Test when only ns selector is used, all pods in the ns will be allowed.
         /// </summary>
         [TestMethod]
         public void ReachabilityMatrix_NSOnly()
@@ -220,7 +220,7 @@ namespace VerifierTest
         }
         /// <summary>
         /// Test when ns + pod selector is used,
-        /// only allowed pods in allowed ns are allowed
+        /// only allowed pods in allowed ns are allowed.
         /// </summary>
         [TestMethod]
         public void ReachabilityMatrix_NSAndPod()
@@ -267,7 +267,7 @@ namespace VerifierTest
             TestHelper.AssertMatrixEqual(egress, new Zen<IList<bool>>[] { r0, r1, r2, r3 }, "Reachability_Matrix_Test_NS_Pods(egress matrix)");
         }
         /// <summary>
-        /// Test allow all policy
+        /// Test allow all policy.
         /// </summary>
         [TestMethod]
         public void ReachabilityMatrix_AllowAll()
@@ -309,7 +309,7 @@ namespace VerifierTest
             TestHelper.AssertMatrixEqual(egress, new Zen<IList<bool>>[] { r0, r1, r2, r3 }, "Reachability_Matrix_Test_Allow_All(egress matrix)");
         }
         /// <summary>
-        /// Test deny all policy
+        /// Test deny all policy.
         /// </summary>
         [TestMethod]
         public void Reachabilitymatrix_DenyAll()
@@ -349,13 +349,13 @@ namespace VerifierTest
         }
     }
     /// <summary>
-    /// Test of helper functions
+    /// Test of helper functions.
     /// </summary>
     [TestClass]
     public class HelperTest
     {
         /// <summary>
-        /// Test matrix transpose
+        /// Test matrix transpose.
         /// </summary>
         [TestMethod]
         public void TestTranspose()
@@ -381,16 +381,16 @@ namespace VerifierTest
         }
     }
     /// <summary>
-    /// Helper functions for test
+    /// Helper functions for test.
     /// </summary>
     public static class TestHelper
     {
         /// <summary>
-        /// Assert two Zen<IList<bool>> are equal
+        /// Assert two Zen<IList<bool>> are equal.
         /// </summary>
-        /// <param name="output">output matrix</param>
-        /// <param name="expected">expected matrix</param>
-        /// <param name="msg">test msg</param>
+        /// <param name="output">output matrix.</param>
+        /// <param name="expected">expected matrix.</param>
+        /// <param name="msg">test msg.</param>
         public static void AssertMatrixEqual(Zen<IList<bool>>[] output, Zen<IList<bool>>[] expected, string msg="")
         {
             var n = output.Length;
