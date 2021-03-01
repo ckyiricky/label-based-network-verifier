@@ -6,8 +6,17 @@ using static ZenLib.Language;
 
 namespace LabelBasedNetworkVerification
 {
+    /// <summary>
+    /// Helper functions
+    /// </summary>
     public static class HelperFunctions
     {
+        /// <summary>
+        /// And operation of two Zen List<bool>
+        /// </summary>
+        /// <param name="ma">list a</param>
+        /// <param name="mb">list b</param>
+        /// <returns>list of a&b</returns>
         public static Zen<IList<bool>> And(this Zen<IList<bool>> ma, Zen<IList<bool>> mb)
         {
             var index = mb.Length(); 
@@ -15,6 +24,12 @@ namespace LabelBasedNetworkVerification
             //var ret = mb.Select(r => mb.At(index -= 1).Value());
             return ret;
         }
+        /// <summary>
+        /// Or operation of two Zen List<bool>
+        /// </summary>
+        /// <param name="ma">list a</param>
+        /// <param name="mb">list b</param>
+        /// <returns>list of a|b</returns>
         public static Zen<IList<bool>> Or(this Zen<IList<bool>> ma, Zen<IList<bool>> mb)
         {
             var index = mb.Length(); 
@@ -22,15 +37,31 @@ namespace LabelBasedNetworkVerification
             //var ret = mb.Select(r => mb.At(index -= 1).Value());
             return ret;
         }
+        /// <summary>
+        /// Not operation of one Zen List<bool>
+        /// </summary>
+        /// <param name="ma">list a</param>
+        /// <returns>!a</returns>
         public static Zen<IList<bool>> Not(this Zen<IList<bool>> ma)
         {
             var ret = ma.Select(r => Language.Not(r));
             return ret;
         }
+        /// <summary>
+        /// Compare if the value of a Zen<ushort> is equal to ushort b
+        /// </summary>
+        /// <param name="a">Zen ushort</param>
+        /// <param name="b">ushort</param>
+        /// <returns>if their values are equal</returns>
         public static bool EqualToNumber(this Zen<ushort> a, ushort b)
         {
             return a.ToString().Equals(b.ToString());
         }
+        /// <summary>
+        /// Transpose a matrix and return it
+        /// </summary>
+        /// <param name="x">input matrix</param>
+        /// <returns>transposed matrix(it is the same ref of the input matrix)</returns>
         public static BitArray[] Transpose(this BitArray[] x)
         {
             var n = x.Length;
