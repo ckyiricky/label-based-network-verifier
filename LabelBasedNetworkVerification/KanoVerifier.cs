@@ -110,7 +110,7 @@ namespace LabelBasedNetworkVerification
         /// <param name="pods">all pods.</param>
         /// <param name="policies">all policies.</param>
         /// <param name="namespaces">all namespaces.</param>
-        /// <returns>two reachability matrix.</returns>
+        /// <returns>two reachability matrices.</returns>
         public static (Zen<IList<bool>>[] egressMatrix, Zen<IList<bool>>[] ingressMatrix) CreateReachMatrix(Zen<Pod>[] pods, Zen<Policy>[] policies, Zen<Namespace>[] namespaces)
         {
             var n = pods.Length;
@@ -357,7 +357,7 @@ namespace LabelBasedNetworkVerification
         }
     }
     /// <summary>
-    /// Vialotion checkers.
+    /// Violation checkers.
     /// </summary>
     public static class Verifier
     {
