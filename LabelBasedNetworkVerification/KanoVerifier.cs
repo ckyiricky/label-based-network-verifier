@@ -367,18 +367,24 @@ namespace LabelBasedNetworkVerification
         /// <param name="matrix">ingress reachability matrix.</param>
         /// <param name="reach">reachable or isolated flag.</param>
         /// <returns>list of reachable/isolated pods index.</returns>
-        // TODO: isolated check implementation
         public static Zen<IList<ushort>> AllReachableCheck(Zen<IList<bool>>[] matrix, Zen<bool> reach)
         {
             int n = matrix.Length;
             Zen<IList<ushort>> podList = EmptyList<ushort>();
             for (var i = 0; i < n; ++i)
             {
-                var c = If<ushort>(matrix[i].All(r => r.Equals(True())), (ushort)i, ushort.MaxValue);
+                var c = If(reach, If<ushort>(matrix[i].All(r => r.Equals(reach)), (ushort)i, ushort.MaxValue), IsolatedCheckHelper(matrix[i], (ushort)i, 1));
+                // var c = If<ushort>(matrix[i].All(r => r.Equals(reach)), (ushort)i, ushort.MaxValue);
                 if (c.EqualToNumber((ushort)i))
                     podList = podList.AddBack(c);
             }
             return podList;
+        }
+        static Zen<ushort> IsolatedCheckHelper(Zen<IList<bool>> list, Zen<ushort> index, Zen<ushort> quota)
+        {
+            return list.Case(
+                empty: index,
+                cons: (hd, tl) => If(Not(hd), IsolatedCheckHelper(tl, index, quota), If(quota > 0, IsolatedCheckHelper(list, index, quota - 1), ushort.MaxValue)));
         }
         /// <summary>
         /// Find pods can only be reached from pods of same user.
