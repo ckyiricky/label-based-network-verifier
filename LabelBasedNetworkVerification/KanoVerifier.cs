@@ -374,7 +374,6 @@ namespace LabelBasedNetworkVerification
             for (var i = 0; i < n; ++i)
             {
                 var c = If(reach, If<ushort>(matrix[i].All(r => r.Equals(reach)), (ushort)i, ushort.MaxValue), IsolatedCheckHelper(matrix[i], (ushort)i, 1));
-                // var c = If<ushort>(matrix[i].All(r => r.Equals(reach)), (ushort)i, ushort.MaxValue);
                 if (c.EqualToNumber((ushort)i))
                     podList = podList.AddBack(c);
             }
@@ -384,7 +383,7 @@ namespace LabelBasedNetworkVerification
         {
             return list.Case(
                 empty: index,
-                cons: (hd, tl) => If(Not(hd), IsolatedCheckHelper(tl, index, quota), If(quota > 0, IsolatedCheckHelper(list, index, quota - 1), ushort.MaxValue)));
+                cons: (hd, tl) => If(Not(hd), IsolatedCheckHelper(tl, index, quota), If(quota > 0, IsolatedCheckHelper(tl, index, quota - 1), ushort.MaxValue)));
         }
         /// <summary>
         /// Find pods can only be reached from pods of same user.

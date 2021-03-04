@@ -349,6 +349,34 @@ namespace VerifierTest
         }
     }
     /// <summary>
+    /// Test violation checkers of kano
+    /// </summary>
+    [TestClass]
+    public class ViolationCheckerTests
+    {
+        /// <summary>
+        /// Check all reachable and all isolated
+        ///   one pod can always access itself
+        /// </summary>
+        [TestMethod]
+        public void AllReachableCheckTest()
+        {
+            var mx = new Zen<IList<bool>>[]
+            {
+                EmptyList<bool>().AddBack(true).AddBack(false).AddBack(false),
+                EmptyList<bool>().AddBack(true).AddBack(true).AddBack(true),
+                EmptyList<bool>().AddBack(true).AddBack(false).AddBack(true),
+            };
+            var output = Verifier.AllReachableCheck(mx, True());
+            var expected = EmptyList<ushort>().AddBack(1);
+            Assert.IsTrue(output.ToString().Equals(expected.ToString()), "AllReachableTest: all reachable list is not correct");
+
+            output = Verifier.AllReachableCheck(mx, False());
+            expected = EmptyList<ushort>().AddBack(0);
+            Assert.IsTrue(output.ToString().Equals(expected.ToString()), "AllReachableTest: all isolated list is not correct");
+        }
+    }
+    /// <summary>
     /// Test of helper functions.
     /// </summary>
     [TestClass]
