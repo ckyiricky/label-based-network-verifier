@@ -74,5 +74,23 @@ namespace LabelBasedNetworkVerification
             }
             return x;
         }
+        /// <summary>
+        /// Ad-hoc to get value of pod label of a specific key.
+        /// </summary>
+        /// <param name="pod"></param>
+        /// <param name="key"></param>
+        /// <returns>string value of a pod's label associated with the key.</returns>
+        public static string LabelValue(this Zen<Pod> pod, Zen<string> key)
+        {
+            var userValue = pod.GetLabels().Get(key).Value().ToString();
+            var index = userValue.IndexOf(" Value=");
+            if (index == -1)
+                return null;
+            var substr = userValue.Substring(index + 7);
+            index = substr.IndexOf(',');
+            if (index == -1)
+                return null;
+            return substr.Substring(0, index);
+        }
     }
 }

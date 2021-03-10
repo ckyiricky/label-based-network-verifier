@@ -7,7 +7,7 @@ namespace LabelBasedNetworkVerification
 {
     class Program
     {
-        static unsafe void Main(string[] args)
+        static void Main(string[] args)
         {
             /*
             Zen<IDictionary<string, string>> l1 = Language.EmptyDict<string, string>();

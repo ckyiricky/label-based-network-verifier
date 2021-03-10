@@ -347,6 +347,30 @@ namespace VerifierTest
             r3 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(true).AddBack(true);
             TestHelper.AssertMatrixEqual(egress, new Zen<IList<bool>>[] { r0, r1, r2, r3 }, "Reachability_Matrix_Test_Deny_All(egress matrix)");
         }
+        /// <summary>
+        /// Test user-pod mapping creation
+        /// </summary>
+        [TestMethod]
+        public void UserHashMapTest()
+        {
+            Zen<Pod>[] pods = new Zen<Pod>[]
+            {
+                Pod.Create("default", EmptyDict<string, string>().Add("user", "v0"), EmptyList<string>().AddBack("user")),
+                Pod.Create("default", EmptyDict<string, string>().Add("user", "v1"), EmptyList<string>().AddBack("user")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("user", "v1"), EmptyList<string>().AddBack("user")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("user", "v2"), EmptyList<string>().AddBack("user"))
+            };
+            string userKey = "user";
+            var userHash = Algorithms.GetUserHash(pods, "user");
+            var r0 = EmptyList<bool>().AddBack(true).AddBack(false).AddBack(false).AddBack(false);
+            var r1 = EmptyList<bool>().AddBack(false).AddBack(true).AddBack(true).AddBack(false);
+            var r2 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false).AddBack(true);
+            TestHelper.AssertMatrixEqual(new Zen<IList<bool>>[] {
+                userHash.Get(pods[0].LabelValue(userKey).GetHashCode()).Value(),
+                userHash.Get(pods[1].LabelValue(userKey).GetHashCode()).Value(),
+                userHash.Get(pods[3].LabelValue(userKey).GetHashCode()).Value(),
+            }, new Zen<IList<bool>>[] { r0, r1, r2 }, "User_Hash_Map_Test");
+        }
     }
     /// <summary>
     /// Test violation checkers of kano
@@ -374,6 +398,52 @@ namespace VerifierTest
             output = Verifier.AllReachableCheck(mx, False());
             expected = EmptyList<ushort>().AddBack(0);
             Assert.IsTrue(output.ToString().Equals(expected.ToString()), "AllReachableTest: all isolated list is not correct");
+        }
+        [TestMethod]
+        public void UserCrossCheckTest()
+        {
+            var matrix = new Zen<IList<bool>>[]
+            {
+                EmptyList<bool>().AddBack(true).AddBack(true).AddBack(false).AddBack(false).AddBack(false),
+                EmptyList<bool>().AddBack(false).AddBack(true).AddBack(true).AddBack(false).AddBack(false),
+                EmptyList<bool>().AddBack(true).AddBack(false).AddBack(true).AddBack(false).AddBack(false),
+                EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false).AddBack(true).AddBack(false),
+                EmptyList<bool>().AddBack(true).AddBack(true).AddBack(true).AddBack(true).AddBack(true),
+            };
+            Zen<Pod>[] pods = new Zen<Pod>[]
+            {
+                Pod.Create("default", EmptyDict<string, string>().Add("user", "v0"), EmptyList<string>().AddBack("user")),
+                Pod.Create("default", EmptyDict<string, string>().Add("user", "v1"), EmptyList<string>().AddBack("user")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("user", "v1"), EmptyList<string>().AddBack("user")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("user", "v2"), EmptyList<string>().AddBack("user")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("user", "v2"), EmptyList<string>().AddBack("user")),
+            };
+            string userKey = "user";
+            var userHash = Algorithms.GetUserHash(pods, userKey);
+            var output = Verifier.UserCrossCheck(matrix, userHash, pods, userKey);
+            var expected = EmptyList<ushort>().AddBack(1).AddBack(3);
+            Assert.IsTrue(output.ToString().Equals(expected.ToString()), "UserCrossCheckTest: pods list is not correct.\n " +
+                "Expected: {0}\nGot: {1}", expected.ToString(), output.ToString());
+
+            matrix = new Zen<IList<bool>>[]
+            {
+                EmptyList<bool>().AddBack(true).AddBack(true).AddBack(false).AddBack(false),
+                EmptyList<bool>().AddBack(false).AddBack(true).AddBack(false).AddBack(false),
+                EmptyList<bool>().AddBack(true).AddBack(true).AddBack(true).AddBack(false),
+                EmptyList<bool>().AddBack(true).AddBack(false).AddBack(false).AddBack(true),
+            };
+            pods = new Zen<Pod>[]
+            {
+                Pod.Create("default", EmptyDict<string, string>().Add("user", "v0"), EmptyList<string>().AddBack("user")),
+                Pod.Create("default", EmptyDict<string, string>().Add("user", "v1"), EmptyList<string>().AddBack("user")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("user", "v1"), EmptyList<string>().AddBack("user")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("user", "v2"), EmptyList<string>().AddBack("user"))
+            };
+            userHash = Algorithms.GetUserHash(pods, userKey);
+            output = Verifier.UserCrossCheck(matrix, userHash, pods, userKey);
+            expected = EmptyList<ushort>().AddBack(1);
+            Assert.IsTrue(output.ToString().Equals(expected.ToString()), "UserCrossCheckTest: pods list is not correct.\n " +
+                "Expected: {0}\nGot: {1}", expected.ToString(), output.ToString());
         }
     }
     /// <summary>
@@ -407,6 +477,21 @@ namespace VerifierTest
                     Assert.AreEqual(x[i][j], y[i][j], string.Format("{0}{1} doesn't transpose", i, j));
             }
         }
+        [TestMethod]
+        public void TestPodLabelValue()
+        {
+            var pods = new Zen<Pod>[]
+            {
+                Pod.Create("default", EmptyDict<string, string>().Add("k0", "v0"), EmptyList<string>().AddBack("user")),
+                Pod.Create("default", EmptyDict<string, string>().Add("k1", "v1"), EmptyList<string>().AddBack("user")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("k2", "v2"), EmptyList<string>().AddBack("user")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("k3", "v3"), EmptyList<string>().AddBack("user"))
+            };
+            Assert.IsTrue(pods[0].LabelValue("k0") == "v0", "pod0 got wrong value of key {0}.\nExpected: {1}\nGot: {2}", "k0", "v0", pods[0].LabelValue("k0"));
+            Assert.IsTrue(pods[1].LabelValue("k1") == "v1", "pod1 got wrong value of key {0}.\nExpected: {1}\nGot: {2}", "k1", "v1", pods[1].LabelValue("k1"));
+            Assert.IsTrue(pods[2].LabelValue("k2") == "v2", "pod2 got wrong value of key {0}.\nExpected: {1}\nGot: {2}", "k2", "v2", pods[2].LabelValue("k2"));
+            Assert.IsTrue(pods[3].LabelValue("k3") == "v3", "pod3 got wrong value of key {0}.\nExpected: {1}\nGot: {2}", "k3", "v3", pods[3].LabelValue("k3"));
+        }
     }
     /// <summary>
     /// Helper functions for test.
@@ -425,7 +510,7 @@ namespace VerifierTest
             var m = expected.Length;
             Assert.AreEqual(n, m, "{0}: output has length {1} while expected has length {2}", n, m, msg);
             for (int i = 0; i < n; ++i)
-                Assert.IsTrue(output[i].ToString().Equals(expected[i].ToString()), "{0}: pod{1} has wrong reachability", msg, i);
+                Assert.IsTrue(output[i].ToString().Equals(expected[i].ToString()), "{0}: pod{1} has wrong reachability\nExpected: {2}\nGot: {3}", msg, i, expected[i].ToString(), output[i].ToString());
         }
     }
 }

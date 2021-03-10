@@ -84,14 +84,16 @@ namespace LabelBasedNetworkVerification
             Dictionary<int, bool[]> originalData = new Dictionary<int, bool[]>();
             for (int i = 0; i < n; ++i)
             {
-                var userValue = pods[i].GetLabels().Get(userKey).Value();
-                var hash = userValue.GetHashCode();
+                var labelValue = pods[i].LabelValue(userKey);
+                if (labelValue == null)
+                    continue;
+                var hash = labelValue.GetHashCode();
                 if (!originalData.ContainsKey(hash))
                     originalData[hash] = new bool[n];
                 originalData[hash][i] = true;
             }
             // create zen data.
-            Zen<IDictionary<int, IList<bool>>> userHashMap = Language.EmptyDict<int, IList<bool>>();
+            Zen<IDictionary<int, IList<bool>>> userHashMap = EmptyDict<int, IList<bool>>();
             foreach (var kv in originalData)
             {
                 userHashMap = userHashMap.Add(kv.Key, kv.Value);
@@ -399,22 +401,22 @@ namespace LabelBasedNetworkVerification
             Zen<Pod>[] pods,
             Zen<string> userKey)
         {
-            var n = matrix.Length;
+            var n = pods.Length;
             Zen<IList<ushort>> podList = EmptyList<ushort>();
             for (int i = 0; i < n; ++i)
             {
-                var userValue = pods[i].GetLabels().Get(userKey).Value();
-                var veriSet = userHashmap.Get(userValue.GetHashCode()).Value();
-                veriSet = veriSet.Not();
-                veriSet = veriSet.And(matrix[i]);
+                var userString = pods[i].LabelValue(userKey);
+                if (userString == null)
+                    continue;
+                var veriSet = userHashmap.Get(userString.GetHashCode()).Value();
+                veriSet = veriSet.Not().And(matrix[i]);
                 var c = If<ushort>(veriSet.All(r => r.Equals(False())), (ushort)i, ushort.MaxValue);
                 // if this pod can only be reached from same user's pods, add it to list
-                if (c.EqualToNumber((ushort)i))
+                if (!c.EqualToNumber(ushort.MaxValue))
                     podList = podList.AddBack(c);
             }
             return podList;
         }
-        // matrix is egress as row and ingress as column
         /// <summary>
         /// Find isolated pods to pod index.
         /// </summary>
