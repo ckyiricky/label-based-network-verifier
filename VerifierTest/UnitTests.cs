@@ -1,8 +1,9 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ZenLib;
-using LabelBasedNetworkVerification;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using ZenLib;
+using LabelBasedNetworkVerification;
 using static ZenLib.Language;
 
 namespace VerifierTest
@@ -227,10 +228,11 @@ namespace VerifierTest
         {
             Zen<Pod>[] pods = new Zen<Pod>[]
             {
-                Pod.Create("default", EmptyDict<string, string>().Add("k0", "v0"), EmptyList<string>().AddBack("k0")),
+                Pod.Create("default", EmptyDict<string, string>().Add("k0", "v0").Add("k1", "v1"), EmptyList<string>().AddBack("k0").AddBack("k1")),
                 Pod.Create("default", EmptyDict<string, string>().Add("k1", "v1"), EmptyList<string>().AddBack("k1")),
                 Pod.Create("ns1", EmptyDict<string, string>().Add("k2", "v2"), EmptyList<string>().AddBack("k2")),
-                Pod.Create("ns1", EmptyDict<string, string>().Add("k3", "v3"), EmptyList<string>().AddBack("k3"))
+                Pod.Create("ns1", EmptyDict<string, string>().Add("k3", "v3"), EmptyList<string>().AddBack("k3")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("k4", "v4"), EmptyList<string>().AddBack("k4"))
             };
             Zen<Namespace>[] namespaces = new Zen<Namespace>[]
             {
@@ -239,13 +241,13 @@ namespace VerifierTest
             };
             Zen<Policy>[] policies = new Zen<Policy>[]
             {
-                Policy.Create("default", EmptyDict<string, string>().Add("k0", "v0"),
-                EmptyDict<string, string>().Add("k2", "v2"), EmptyDict<string, string>().Add("k1", "v1"),
-                EmptyList<string>().AddBack("k0"), EmptyList<string>().AddBack("k2"), EmptyList<string>().AddBack("k1")),
+                Policy.Create("default", EmptyDict<string, string>().Add("k0", "v0").Add("k1", "v1"),
+                EmptyDict<string, string>().Add("k4", "v4"), EmptyDict<string, string>().Add("k1", "v1"),
+                EmptyList<string>().AddBack("k0").AddBack("k1"), EmptyList<string>().AddBack("k4"), EmptyList<string>().AddBack("k1")),
 
-                Policy.Create("default", EmptyDict<string, string>().Add("k0", "v0"),
+                Policy.Create("default", EmptyDict<string, string>().Add("k1", "v1"),
                 EmptyDict<string, string>().Add("k2", "v2"), EmptyDict<string, string>().Add("k1", "v1"),
-                EmptyList<string>().AddBack("k0"), EmptyList<string>().AddBack("k2"), EmptyList<string>().AddBack("k1"),
+                EmptyList<string>().AddBack("k1"), EmptyList<string>().AddBack("k2"), EmptyList<string>().AddBack("k1"),
                 False(), False()),
 
                 Policy.Create("ns1", EmptyDict<string, string>().Add("k3", "v3"),
@@ -253,18 +255,20 @@ namespace VerifierTest
                 EmptyList<string>().AddBack("k3"), EmptyList<string>().AddBack("k2"), EmptyList<string>().AddBack("k0")),
             };
             var ingress = Algorithms.CreateReachMatrix(pods, policies, namespaces).ingressMatrix;
-            var r0 = EmptyList<bool>().AddBack(true).AddBack(false).AddBack(true).AddBack(false);
-            var r1 = EmptyList<bool>().AddBack(false).AddBack(true).AddBack(true).AddBack(false);
-            var r2 = EmptyList<bool>().AddBack(true).AddBack(true).AddBack(true).AddBack(false);
-            var r3 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false).AddBack(true);
-            TestHelper.AssertMatrixEqual(ingress, new Zen<IList<bool>>[] { r0, r1, r2, r3 }, "Reachability_Matrix_Test_NS_Pods(ingress matrix)");
+            var r0 = EmptyList<bool>().AddBack(true).AddBack(false).AddBack(false).AddBack(false).AddBack(true);
+            var r1 = EmptyList<bool>().AddBack(false).AddBack(true).AddBack(false).AddBack(false).AddBack(false);
+            var r2 = EmptyList<bool>().AddBack(true).AddBack(true).AddBack(true).AddBack(false).AddBack(true);
+            var r3 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false).AddBack(true).AddBack(false);
+            var r4 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(true).AddBack(false).AddBack(true);
+            TestHelper.AssertMatrixEqual(ingress, new Zen<IList<bool>>[] { r0, r1, r2, r3 ,r4 }, "Reachability_Matrix_Test_NS_Pods(ingress matrix)");
             
             var egress = Algorithms.CreateReachMatrix(pods, policies, namespaces).egressMatrix;
-            r0 = EmptyList<bool>().AddBack(true).AddBack(false).AddBack(true).AddBack(false);
-            r1 = EmptyList<bool>().AddBack(false).AddBack(true).AddBack(true).AddBack(false);
-            r2 = EmptyList<bool>().AddBack(true).AddBack(true).AddBack(true).AddBack(false);
-            r3 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false).AddBack(true);
-            TestHelper.AssertMatrixEqual(egress, new Zen<IList<bool>>[] { r0, r1, r2, r3 }, "Reachability_Matrix_Test_NS_Pods(egress matrix)");
+            r0 = EmptyList<bool>().AddBack(true).AddBack(false).AddBack(true).AddBack(false).AddBack(false);
+            r1 = EmptyList<bool>().AddBack(false).AddBack(true).AddBack(true).AddBack(false).AddBack(false);
+            r2 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(true).AddBack(false).AddBack(true);
+            r3 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false).AddBack(true).AddBack(false);
+            r4 = EmptyList<bool>().AddBack(true).AddBack(false).AddBack(true).AddBack(false).AddBack(true);
+            TestHelper.AssertMatrixEqual(egress, new Zen<IList<bool>>[] { r0, r1, r2, r3, r4}, "Reachability_Matrix_Test_NS_Pods(egress matrix)");
         }
         /// <summary>
         /// Test allow all policy.
@@ -399,6 +403,9 @@ namespace VerifierTest
             expected = EmptyList<ushort>().AddBack(0);
             Assert.IsTrue(output.ToString().Equals(expected.ToString()), "AllReachableTest: all isolated list is not correct");
         }
+        /// <summary>
+        /// Test user cross checker
+        /// </summary>
         [TestMethod]
         public void UserCrossCheckTest()
         {
@@ -445,6 +452,91 @@ namespace VerifierTest
             Assert.IsTrue(output.ToString().Equals(expected.ToString()), "UserCrossCheckTest: pods list is not correct.\n " +
                 "Expected: {0}\nGot: {1}", expected.ToString(), output.ToString());
         }
+        /// <summary>
+        /// Test system isolation checker
+        /// </summary>
+        [TestMethod]
+        public void SystemIsolationCheckTest()
+        {
+            var matrix = new Zen<IList<bool>>[]
+            {
+                EmptyList<bool>().AddBack(true).AddBack(true).AddBack(false).AddBack(false).AddBack(false),
+                EmptyList<bool>().AddBack(false).AddBack(true).AddBack(true).AddBack(false).AddBack(false),
+                EmptyList<bool>().AddBack(true).AddBack(false).AddBack(true).AddBack(false).AddBack(true),
+                EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false).AddBack(true).AddBack(false),
+                EmptyList<bool>().AddBack(true).AddBack(true).AddBack(true).AddBack(true).AddBack(true),
+            };
+            var expecteds = new Zen<IList<ushort>>[]
+            {
+                EmptyList<ushort>().AddBack(2).AddBack(3).AddBack(4),
+                EmptyList<ushort>().AddBack(0).AddBack(3).AddBack(4),
+                EmptyList<ushort>().AddBack(1).AddBack(3),
+                EmptyList<ushort>().AddBack(0).AddBack(1).AddBack(2).AddBack(4),
+                EmptyList<ushort>(),
+            };
+            for (int i = 0; i < 5; ++i)
+            {
+                var output = Verifier.SystemIsolationCheck(matrix, (ushort)i);
+                Assert.IsTrue(output.ToString().Equals(expecteds[i].ToString()), "SystemIsolatedCheckTest: pod{0} has wrong result.\nExpected: {1}\nGot: {2}", i, expecteds[i].ToString(), output.ToString());
+            }
+        }
+        /// <summary>
+        /// Test Policy shadow checker
+        /// </summary>
+        [TestMethod]
+        public void PolicyShadowTest()
+        {
+            Zen<Pod>[] pods = new Zen<Pod>[]
+            {
+                Pod.Create("default", EmptyDict<string, string>().Add("k0", "v0").Add("k1", "v1"), EmptyList<string>().AddBack("k0").AddBack("k1")),
+                Pod.Create("default", EmptyDict<string, string>().Add("k1", "v1"), EmptyList<string>().AddBack("k1")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("k2", "v2"), EmptyList<string>().AddBack("k2")),
+                Pod.Create("ns1", EmptyDict<string, string>().Add("k3", "v3"), EmptyList<string>().AddBack("k3"))
+            };
+            Zen<Namespace>[] namespaces = new Zen<Namespace>[]
+            {
+                Namespace.Create("default", EmptyDict<string, string>().Add("k0", "v0"), EmptyList<string>().AddBack("k0")),
+                Namespace.Create("ns1", EmptyDict<string, string>().Add("k1", "v1"), EmptyList<string>().AddBack("k1"))
+            };
+            Zen<Policy>[] policies = new Zen<Policy>[]
+            {
+                Policy.Create("default", EmptyDict<string, string>().Add("k0", "v0").Add("k1", "v1"),
+                EmptyDict<string, string>().Add("k2", "v2"), EmptyDict<string, string>().Add("k1", "v1"),
+                EmptyList<string>().AddBack("k0").AddBack("k1"), EmptyList<string>().AddBack("k2"), EmptyList<string>().AddBack("k1")),
+
+                Policy.Create("default", EmptyDict<string, string>().Add("k1", "v1"),
+                EmptyDict<string, string>(), EmptyDict<string, string>().Add("k1", "v1"),
+                EmptyList<string>().AddBack("k1"), EmptyList<string>(), EmptyList<string>().AddBack("k1")),
+
+                Policy.Create("ns1", EmptyDict<string, string>().Add("k3", "v3"),
+                EmptyDict<string, string>().Add("k2","v2"), EmptyDict<string, string>().Add("k0", "v0"),
+                EmptyList<string>().AddBack("k3"), EmptyList<string>().AddBack("k2"), EmptyList<string>().AddBack("k0")),
+            };
+
+            var podPolMx = Algorithms.CreateReachMatrix(pods, policies, namespaces).podPolMatrix;
+            var r0 = EmptyList<bool>().AddBack(true).AddBack(true).AddBack(false);
+            var r1 = EmptyList<bool>().AddBack(false).AddBack(true).AddBack(false);
+            var r2 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false);
+            var r3 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(true);
+            TestHelper.AssertMatrixEqual(podPolMx, new Zen<IList<bool>>[] { r0, r1, r2, r3 }, "PolicyShadowTest: PodPolMatrix");
+
+            var polPodAllowedMx = Algorithms.CreateReachMatrix(pods, policies, namespaces).polPodAllowedMatrix;
+            r0 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(true).AddBack(false);
+            r1 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(true).AddBack(true);
+            r2 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false).AddBack(false);
+            TestHelper.AssertMatrixEqual(polPodAllowedMx, new Zen<IList<bool>>[] { r0, r1, r2 }, "PolicyShadowTest: PolPodAllowedMatrix");
+
+            var polPodSelectedMx = Algorithms.CreateReachMatrix(pods, policies, namespaces).polPodSelectedMatrix;
+            r0 = EmptyList<bool>().AddBack(true).AddBack(false).AddBack(false).AddBack(false);
+            r1 = EmptyList<bool>().AddBack(true).AddBack(true).AddBack(false).AddBack(false);
+            r2 = EmptyList<bool>().AddBack(false).AddBack(false).AddBack(false).AddBack(true);
+            TestHelper.AssertMatrixEqual(polPodSelectedMx, new Zen<IList<bool>>[] { r0, r1, r2 }, "PolicyShadowTest: PolPodSelectedMatrix");
+
+            var shadowedPair = Verifier.PolicyShadowCheck(podPolMx, polPodAllowedMx, polPodSelectedMx);
+            Assert.IsTrue(shadowedPair.Length().EqualToNumber(1));
+            var expected = EmptyList<Tuple<int, int>>().AddBack(Tuple<int, int>(1, 0));
+            Assert.IsTrue(shadowedPair.ToString().Equals(expected.ToString()), "PolicyShadowTest: shadow pairs are not correct.\nExpected: {0}\nGot: {1}", expected.ToString(), shadowedPair.ToString());
+        }
     }
     /// <summary>
     /// Test of helper functions.
@@ -477,6 +569,9 @@ namespace VerifierTest
                     Assert.AreEqual(x[i][j], y[i][j], string.Format("{0}{1} doesn't transpose", i, j));
             }
         }
+        /// <summary>
+        /// Test LabelValue helper function.
+        /// </summary>
         [TestMethod]
         public void TestPodLabelValue()
         {
@@ -491,6 +586,16 @@ namespace VerifierTest
             Assert.IsTrue(pods[1].LabelValue("k1") == "v1", "pod1 got wrong value of key {0}.\nExpected: {1}\nGot: {2}", "k1", "v1", pods[1].LabelValue("k1"));
             Assert.IsTrue(pods[2].LabelValue("k2") == "v2", "pod2 got wrong value of key {0}.\nExpected: {1}\nGot: {2}", "k2", "v2", pods[2].LabelValue("k2"));
             Assert.IsTrue(pods[3].LabelValue("k3") == "v3", "pod3 got wrong value of key {0}.\nExpected: {1}\nGot: {2}", "k3", "v3", pods[3].LabelValue("k3"));
+        }
+        /// <summary>
+        /// Test StringValue helper function.
+        /// </summary>
+        [TestMethod]
+        public void TestStringValue()
+        {
+            var pod = Pod.Create("default", EmptyDict<string, string>().Add("k0", "v0"), EmptyList<string>().AddBack("k0"));
+            var expected = pod.GetLabels().Get("k0").Value().StringValue();
+            Assert.IsTrue(expected.Equals("v0"));
         }
     }
     /// <summary>

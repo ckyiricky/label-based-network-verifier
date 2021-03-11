@@ -112,11 +112,15 @@ namespace LabelBasedNetworkVerification
         /// <param name="pods">all pods.</param>
         /// <param name="policies">all policies.</param>
         /// <param name="namespaces">all namespaces.</param>
-        /// <returns>two reachability matrices.</returns>
-        public static (Zen<IList<bool>>[] egressMatrix, Zen<IList<bool>>[] ingressMatrix) CreateReachMatrix(Zen<Pod>[] pods, Zen<Policy>[] policies, Zen<Namespace>[] namespaces)
+        /// <returns>two reachability matrices and three BCP matrices.</returns>
+        public static (Zen<IList<bool>>[] egressMatrix, Zen<IList<bool>>[] ingressMatrix, Zen<IList<bool>>[] podPolMatrix, Zen<IList<bool>>[] polPodAllowedMatrix, Zen<IList<bool>>[] polPodSelectedMatrix) CreateReachMatrix(Zen<Pod>[] pods, Zen<Policy>[] policies, Zen<Namespace>[] namespaces)
         {
             var n = pods.Length;
             var m = policies.Length;
+            // BCP
+            var selectedPolicies = new bool[n, m];
+            var allowedPods = new bool[m, n];
+            var selectedPods = new bool[m, n];
             /***********************ns filter*********************/
             // Create ns-pod mapping
             Dictionary<int, BitArray> nsMatrix = new Dictionary<int, BitArray>();
@@ -283,13 +287,16 @@ namespace LabelBasedNetworkVerification
                         {
                             var key = keys.At(k).Value();
                             var value = labels.Get(key).Value();
-                            if (!(podLabels.Get(key).Value().GetHashCode() == value.GetHashCode()))
+                            if (!podLabels.Get(key).Value().StringValue().Equals(value.StringValue()))
                             {
                                 allowSet.Set(j, false);
                                 break;
                             }
                         }
                     }
+                    // update BCP policy-pod mapping
+                    if (allowSet.Get(j))
+                        allowedPods[i, j] = true;
                 }
 
                 labels = policies[i].GetSelectLabels();
@@ -309,7 +316,7 @@ namespace LabelBasedNetworkVerification
                         {
                             var key = keys.At(k).Value();
                             var value = labels.Get(key).Value();
-                            if (!(podLabels.Get(key).Value().GetHashCode() == value.GetHashCode()))
+                            if (!podLabels.Get(key).Value().StringValue().Equals(value.StringValue()))
                             {
                                 selectSet.Set(j, false);
                                 break;
@@ -329,6 +336,9 @@ namespace LabelBasedNetworkVerification
                             ingressReachMatrix[j].Set(j, true);
                             egressReachMatrix[j].Set(j, true);
                         }
+                        // update BCP selected mapping
+                        selectedPolicies[j, i] = true;
+                        selectedPods[i, j] = true;
                         // allow pods to/from selected pod
                         reachMatrix[j] = reachMatrix[j].Or(allowSet);
                     }
@@ -344,9 +354,17 @@ namespace LabelBasedNetworkVerification
             // ingress matrix is transpose of egress matrix
             ingressReachMatrix = egressReachMatrix.Select(v => (BitArray)v.Clone()).ToArray();
             ingressReachMatrix.Transpose();
-            // create Zen data
+            // create Zen data:
+            // 1. egress matrix
+            // 2. ingress matrix
+            // 3. BCP pod-policy mapping
+            // 4. BCP policy-pod allowed mapping
+            // 5. BCP policy-pod selected mapping
             Zen<IList<bool>>[] eMx = new Zen<IList<bool>>[n];
             Zen<IList<bool>>[] inMx = new Zen<IList<bool>>[n];
+            Zen<IList<bool>>[] podPolMx = new Zen<IList<bool>>[n];
+            Zen<IList<bool>>[] polPodAllowedMx = new Zen<IList<bool>>[m];
+            Zen<IList<bool>>[] polPodSelectedMx = new Zen<IList<bool>>[m];
             for (int i = 0; i < n; ++i)
             {
                 var tmp = new bool[n];
@@ -354,8 +372,16 @@ namespace LabelBasedNetworkVerification
                 eMx[i] = tmp;
                 ingressReachMatrix[i].CopyTo(tmp, 0);
                 inMx[i] = tmp;
+                // BCP pod-policy mapping
+                podPolMx[i] = Enumerable.Range(0, m).Select(x => selectedPolicies[i, x]).ToArray();
             }
-            return (eMx, inMx);
+            for (int i = 0; i < m; ++i)
+            {
+                // BCP policy-pod mapping
+                polPodAllowedMx[i] = Enumerable.Range(0, n).Select(x => allowedPods[i, x]).ToArray();
+                polPodSelectedMx[i] = Enumerable.Range(0, n).Select(x => selectedPods[i, x]).ToArray();
+            }
+            return (eMx, inMx, podPolMx, polPodAllowedMx, polPodSelectedMx);
         }
     }
     /// <summary>
@@ -438,6 +464,51 @@ namespace LabelBasedNetworkVerification
                     cList = cList.AddBack(c);
             }
             return cList;
+        }
+        /// <summary>
+        /// Find shadowed policies.
+        /// </summary>
+        /// <param name="selectedPolicies">pods-policy mapping, policies that select this pod will be set.</param>
+        /// <param name="podsAllowed">policy-pod mapping, pods that allowed by this policy will be set.</param>
+        /// <param name="podsSelected">policy-pod mapping, pods that selected by this policy will be set.</param>
+        /// <returns>policy pairs that the first policy shadows the second one.</returns>
+        public static Zen<IList<Tuple<int, int>>> PolicyShadowCheck(Zen<IList<bool>>[] selectedPolicies, Zen<IList<bool>>[] podsAllowed, Zen<IList<bool>>[] podsSelected)
+        {
+            var n = selectedPolicies.Length;
+            var m = podsAllowed.Length;
+            var shadowPairs = EmptyList<Tuple<int, int>>();
+            // cache checked pairs to avoid repeated detection
+            bool[,] checkedPairs = new bool[m, m];
+            for (var i = 0; i < n; ++i)
+            {
+                var polList = selectedPolicies[i];
+                for (var j = 0; j < m; ++j)
+                {
+                    if (polList.At((ushort)j).Value().Equals(False()))
+                        continue;
+                    for (var k = 0; k < m; ++k)
+                    {
+                        if (checkedPairs[j, k])
+                            continue;
+                        if (j == k)
+                            continue;
+                        if (polList.At((ushort)k).Value().Equals(False()))
+                            continue;
+                        checkedPairs[j, k] = true;
+                        var setA = podsAllowed[j];
+                        var setB = podsSelected[j];
+                        setA = setA.And(podsAllowed[k]);
+                        setB = setB.And(podsSelected[k]);
+                        // if m&&k == k, set of m covers set of k
+                        if (setA.ToString().Equals(podsAllowed[k].ToString()) &&
+                            setB.ToString().Equals(podsSelected[k].ToString()))
+                        {
+                            shadowPairs = shadowPairs.AddBack(Tuple<int, int>(j, k));
+                        }
+                    }
+                }
+            }
+            return shadowPairs;
         }
     }
 }

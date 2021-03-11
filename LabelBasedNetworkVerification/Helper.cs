@@ -92,5 +92,22 @@ namespace LabelBasedNetworkVerification
                 return null;
             return substr.Substring(0, index);
         }
+        /// <summary>
+        /// Ad-hoc get string value of a Zen string from Zen-IDictionary-(string, string).
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns>string value of a Zen string.</returns>
+        public static string StringValue(this Zen<string> s)
+        {
+            var userValue = s.ToString();
+            var index = userValue.IndexOf(" Value=");
+            if (index == -1)
+                return null;
+            var substr = userValue.Substring(index + 7);
+            index = substr.IndexOf(',');
+            if (index == -1)
+                return null;
+            return substr.Substring(0, index);
+        }
     }
 }
